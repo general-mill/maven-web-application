@@ -1,0 +1,47 @@
+
+//code in Scripted Way
+node {
+  
+//defining variable for software maven home dir /var/lib/jenkins/tools/Husdon../maen3.8.3
+    def mavenHome=tool name:"maven3.8.3"
+
+//Script for taking code from Github
+    stage('CheckoutCode') {
+       git branch: 'development', credentialsId: '4b24e860-1c28-4a90-bce4-164823630bc4', url: 'https://github.com/general-mill/maven-web-application.git' 
+    }
+
+//Building a package    
+    stage('Build') {
+        sh "${mavenHome}/bin/mvn clean package"
+    }
+   
+//Executing sonarcube report ---> configure sonarcube url,username and password in pom.xml
+    stage('sonarQubeReport'){
+        sh "${mavenHome}/bin/mvn clean package sonar:sonar"
+    }
+    
+    
+//storing package into nexus artifact repo
+   stage('NexusRepo'){
+        sh "${mavenHome}/bin/mvn deploy"
+    }
+    stage('pemfile'){
+        
+        sshagent(['46f82bfd-e6d9-4596-b9c1-d19a0eb68b78']){
+            
+            sh "scp -o StrictHostKeyChecking=no target/maven-web-application.war ec2-user@13.58.73.125:/opt/apache-tomcat-9.0.54/webapps/"
+        
+        
+       // sh "scp -o StrictHostKeyChecking=no /var/lib/jenkins/workspace/wallmart-dev/target/maven-web-application.war ec2-user@13.58.73.125:/opt/apache-tomcat-9.0.54/webapps/"
+        
+       // sh "scp -o StrictHostKeyChecking=no target/maven-web-application.war ec2-user@13.58.73.125:/opt/apache-tomcat-9.0.54/webapps/"
+
+            
+        }
+    
+   
+}
+    
+    
+}
+  
