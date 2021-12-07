@@ -1,0 +1,49 @@
+pipeline{
+    agent any
+    
+    tools{
+        maven 'maven3.8.3'
+    }
+    stages{
+        stage('CheckOutCode'){
+            steps{
+                git branch: 'stage', credentialsId: '4b24e860-1c28-4a90-bce4-164823630bc4', url: 'https://github.com/general-mill/maven-web-application.git'
+            }
+            
+        }
+        
+        stage('Builds'){
+            steps{
+                sh "mvn clean package"
+            }
+            
+            
+            
+        }
+        stage('SonarQubeReport'){
+            steps{
+                sh "mvn clean package sonar:sonar"
+            }
+        }
+        
+        stage('NexusRepoArtifacts'){
+            steps{
+                sh "mvn deploy"
+            }
+            
+        
+        }
+        
+        
+        stage('Tomcat server'){
+            steps{
+                sshagent(['46f82bfd-e6d9-4596-b9c1-d19a0eb68b78']) {
+                    sh "scp -o StrictHostKeyChecking=no /var/lib/jenkins/workspace/wallmart-dev/target/maven-web-application.war ec2-user@3.128.192.29:/opt/apache-tomcat-9.0.54/webapps/"
+    
+}
+            }
+        }
+        
+        
+    }
+}
